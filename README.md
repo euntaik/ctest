@@ -2,12 +2,12 @@
 Test framework for C
 
 ## What is ctest?
-It is a easy to use test framework for C.
+It is an easy to use test framework for C, inspired by Googletest.
 All you have to do is declare a function to be tested using the TEST() macro.
 And thats it!
 
 ## Getting started:
-"ctest" is a single file framwork (ctest.h")
+"ctest" is a single file framwork (ctest.h)
 - Download the source code.
 - Include in your project file.
 - Declare a function with TEST macro.
