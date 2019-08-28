@@ -1,7 +1,7 @@
 /**
  * Test framework for the C language.
  * Inspired by Googletest.
- * Copyright etinum@gmail.com
+ * Copyright 2019 etinum@gmail.com
  */
 
 #ifndef __CTEST_H__
@@ -92,7 +92,7 @@ inline void ___run_test(void (*test)(void), char* name)
 		CTEST_COLOR_BLUE_BOLD, name, CTEST_COLOR_RESET);
     test();
     end = clock();
-    ms = (double)(end - start)/CLOCKS_PER_SEC/1000;
+    ms = ((double)(end - start)*1000)/CLOCKS_PER_SEC;
     printf("%s[ PASSED    ]%s %s%s%s took %0.3lf ms\n", CTEST_COLOR_GREEN, 
 		CTEST_COLOR_RESET, CTEST_COLOR_BLUE_BOLD, name, CTEST_COLOR_RESET, ms);
     printf("\n");
