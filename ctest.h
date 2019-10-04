@@ -62,6 +62,25 @@ inline int __print_array(char* name, uint64_t *array, size_t count)
 		abort(); \
 	}
 
+#define EXPECT_FLOAT_EQ(a, b) \
+	if ((double)a == (double)b) { \
+		printf("%s[        OK ]%s  (%s%s%s%s%s%s%s%s%s) \n", \
+			CTEST_COLOR_GREEN, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
+			CTEST_STRINGIFY(a), CTEST_COLOR_RESET, CTEST_COLOR_YELLOW_BOLD, \
+			" == ", CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
+			CTEST_STRINGIFY(b), CTEST_COLOR_RESET); \
+	} else { \
+		printf("%s[    FAILED ]%s (%s%s%s%s%s%s%s%s%s) => ", \
+			CTEST_COLOR_RED, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
+			CTEST_STRINGIFY(a), CTEST_COLOR_RESET, CTEST_COLOR_YELLOW_BOLD, \
+			" == ", CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
+			CTEST_STRINGIFY(b), CTEST_COLOR_RESET); \
+		printf("(%s%lf != %lf%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(double)(a), (double)(b), CTEST_COLOR_RESET); \
+		printf("\n\033[1;31mTEST TERMINATED! \033[0;32m\n" ); \
+		abort(); \
+	}
+
 #define EXPECT_TRUE(expr) EXPECT_EQ(expr, true)
 #define EXPECT_FALSE(expr) EXPECT_EQ(expr, false)
 
