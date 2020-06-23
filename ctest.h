@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
 #include <time.h>
 
 #define CTEST_STRINGIFY(x) #x
@@ -37,53 +38,85 @@ extern "C" {
 #define printarray(array) \
     __print_array(CTEST_STRINGIFY(array), array, CTEST_ARRAY_SIZE(array))
 
-inline int __print_array(char* name, uint64_t *array, size_t count)
+inline int __print_array(char* name, unsigned long *array, size_t count)
 {
     for (size_t i = 0; i < count; i++)
         printf("%s [%zu] = %lu\n", name, i, array[i]);
 }
 
-#define EXPECT_EQ(a, b) \
-	if (a == b) { \
-		printf("%s[        OK ]%s  (%s%s%s%s%s%s%s%s%s) \n", \
+#define _ABS(a) (((a) < 0) ? -(a): (a))
+#define _PRINT_OK(a, b, _cmp) \
+		printf("%s[        OK ]%s (%s%s%s%s%s%s%s%s%s) => ", \
 			CTEST_COLOR_GREEN, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
 			CTEST_STRINGIFY(a), CTEST_COLOR_RESET, CTEST_COLOR_YELLOW_BOLD, \
-			" == ", CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
-			CTEST_STRINGIFY(b), CTEST_COLOR_RESET); \
-	} else { \
+			_cmp, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
+			CTEST_STRINGIFY(b), CTEST_COLOR_RESET)
+
+#define _PRINT_FAIL(a, b, _cmp) \
 		printf("%s[    FAILED ]%s (%s%s%s%s%s%s%s%s%s) => ", \
 			CTEST_COLOR_RED, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
 			CTEST_STRINGIFY(a), CTEST_COLOR_RESET, CTEST_COLOR_YELLOW_BOLD, \
-			" == ", CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
-			CTEST_STRINGIFY(b), CTEST_COLOR_RESET); \
+			_cmp, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
+			CTEST_STRINGIFY(b), CTEST_COLOR_RESET)
+
+#define EXPECT_EQ(a, b) \
+	if (a == b) { \
+		_PRINT_OK(a, b, " == "); \
+        printf("(%s%llu == %llu%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(unsigned long long)(a), (unsigned long long)(b), CTEST_COLOR_RESET); \
+	} else { \
+		_PRINT_FAIL(a, b, " == "); \
 		printf("(%s%llu != %llu%s)\n", CTEST_COLOR_BLUE_BOLD, \
 			(unsigned long long)(a), (unsigned long long)(b), CTEST_COLOR_RESET); \
 		printf("\n\033[1;31mTEST TERMINATED! \033[0;32m\n" ); \
-		abort(); \
+		exit(1); \
 	}
 
 #define EXPECT_FLOAT_EQ(a, b) \
 	if ((double)a == (double)b) { \
-		printf("%s[        OK ]%s  (%s%s%s%s%s%s%s%s%s) \n", \
-			CTEST_COLOR_GREEN, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
-			CTEST_STRINGIFY(a), CTEST_COLOR_RESET, CTEST_COLOR_YELLOW_BOLD, \
-			" == ", CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
-			CTEST_STRINGIFY(b), CTEST_COLOR_RESET); \
+		_PRINT_OK(a, b, " == "); \
+        printf("(%s%lf == %lf%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(double)(a), (double)(b), CTEST_COLOR_RESET); \
 	} else { \
-		printf("%s[    FAILED ]%s (%s%s%s%s%s%s%s%s%s) => ", \
-			CTEST_COLOR_RED, CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
-			CTEST_STRINGIFY(a), CTEST_COLOR_RESET, CTEST_COLOR_YELLOW_BOLD, \
-			" == ", CTEST_COLOR_RESET, CTEST_COLOR_WHITE_BOLD, \
-			CTEST_STRINGIFY(b), CTEST_COLOR_RESET); \
+		_PRINT_FAIL(a, b, " == "); \
 		printf("(%s%lf != %lf%s)\n", CTEST_COLOR_BLUE_BOLD, \
 			(double)(a), (double)(b), CTEST_COLOR_RESET); \
 		printf("\n\033[1;31mTEST TERMINATED! \033[0;32m\n" ); \
-		abort(); \
+		exit(1); \
+	}
+
+#define EXPECT_NEAR(a, b, delta) \
+	if (a == b) { \
+		_PRINT_OK(a, b, " ~= "); \
+        printf("(%s%lf == %lf%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(double)(a), (double)(b), CTEST_COLOR_RESET); \
+    } else if (_ABS(a - b) <= delta) { \
+        _PRINT_OK(a, b, " ~= "); \
+        printf("(%s%lf ~= %lf%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(double)(a), (double)(b), CTEST_COLOR_RESET); \
+	} else { \
+        _PRINT_FAIL(a, b, " !~= "); \
+		printf("(%s%lf !~= %lf%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(double)(a), (double)(b), CTEST_COLOR_RESET); \
+		printf("\n\033[1;31mTEST TERMINATED! \033[0;32m\n" ); \
+		exit(1); \
 	}
 
 #define EXPECT_TRUE(expr) EXPECT_EQ(expr, true)
 #define EXPECT_FALSE(expr) EXPECT_EQ(expr, false)
 
+#define EXPECT_STRING_EQ(a, b, len) \
+	if (strncmp(a, b, len) == 0) { \
+		_PRINT_OK(a, b, " == "); \
+        printf("(%s%s == %s%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(a), (b), CTEST_COLOR_RESET); \
+	} else { \
+		_PRINT_FAIL(a, b, " == "); \
+		printf("(%s%s != %s%s)\n", CTEST_COLOR_BLUE_BOLD, \
+			(a), (b), CTEST_COLOR_RESET); \
+		printf("\n\033[1;31mTEST TERMINATED! \033[0;32m\n" ); \
+		exit(1); \
+	}
 struct ctests_section_info {
 	void (*func)(void);
 	char* name;
@@ -102,7 +135,7 @@ struct ctests_section_info {
 
 #define RUN_ALL_TESTS() ___run_all_tests()
 
-inline void ___run_test(void (*test)(void), char* name)
+static inline void ___run_test(void (*test)(void), char* name)
 {
     clock_t start = clock();
     clock_t end;
@@ -117,7 +150,7 @@ inline void ___run_test(void (*test)(void), char* name)
     printf("\n");
 }
 
-inline void ___run_all_tests(void)
+static inline void ___run_all_tests(void)
 {
 	extern unsigned long __start____CTESTS___;
 	extern unsigned long __stop____CTESTS___;
